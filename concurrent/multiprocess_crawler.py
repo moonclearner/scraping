@@ -5,6 +5,7 @@ import multiprocessing
 from scraping.cache.mongo_cache import MongoCache
 from mongo_queue import MongoQueue
 from scraping.cache.Downloader import Downloader
+import pdb
 
 SLEEP_TIME = 1
 
@@ -39,7 +40,6 @@ def threaded_crawler(seed_url, delay=5, cache=None, scrape_callback=None, user_a
                             crawl_queue.push(normalize(seed_url, link))
                 crawl_queue.complete(url)
 
-
     # wait for all download threads to finish
     threads = []
     while threads or crawl_queue:
@@ -49,7 +49,8 @@ def threaded_crawler(seed_url, delay=5, cache=None, scrape_callback=None, user_a
         while len(threads) < max_threads and crawl_queue.peek():
             # can start some more threads
             thread = threading.Thread(target=process_queue)
-            thread.setDaemon(True) # set daemon so main thread can exit when receives ctrl-c
+            thread.setDaemon(True)
+            # set daemon so main thread can exit when receives ctrl-c
             thread.start()
             threads.append(thread)
         time.sleep(SLEEP_TIME)
@@ -57,12 +58,13 @@ def threaded_crawler(seed_url, delay=5, cache=None, scrape_callback=None, user_a
 
 def process_crawler(args, **kwargs):
     num_cpus = multiprocessing.cpu_count()
-    #pool = multiprocessing.Pool(processes=num_cpus)
+    # pool = multiprocessing.Pool(processes=num_cpus)
     print 'Starting {} processes'.format(num_cpus)
     processes = []
     for i in range(num_cpus):
         p = multiprocessing.Process(target=threaded_crawler, args=[args], kwargs=kwargs)
-        #parsed = pool.apply_async(threaded_link_crawler, args, kwargs)
+        # parsed = pool.apply_async(threaded_link_crawler, args, kwargs)
+        pdb.set_trace()
         p.start()
         processes.append(p)
     # wait for processes to complete
@@ -73,5 +75,6 @@ def process_crawler(args, **kwargs):
 def normalize(seed_url, link):
     """Normalize this URL by removing hash and adding domain
     """
-    link, _ = urlparse.urldefrag(link) # remove hash to avoid duplicates
+    link, _ = urlparse.urldefrag(link)
+    # remove hash to avoid duplicates
     return urlparse.urljoin(seed_url, link)
